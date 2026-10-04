@@ -16,7 +16,7 @@ export default function CveExplorer({ onSelectCve }) {
     setLoading(true);
     try {
       const vendorParam = vendorFilter !== 'ALL' ? `&vendor=${encodeURIComponent(vendorFilter)}` : '';
-      const res = await fetch(`http://127.0.0.1:8000/api/cves?limit=100${vendorParam}`);
+      const res = await fetch(`/api/cves?limit=100${vendorParam}`);
       if (res.ok) {
         const data = await res.json();
         setCves(data.cves || []);
@@ -37,7 +37,7 @@ export default function CveExplorer({ onSelectCve }) {
     setSyncing(true);
     setSyncStatus('Initiating live CISA KEV Sync...');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/sync', {
+      const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ limit: 300 })
