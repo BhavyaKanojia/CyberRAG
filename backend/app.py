@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 from groq import Groq
 import requests
 
@@ -42,15 +42,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global persistent singletons
-print("[CyberRAG] Initializing in-memory embedding model and vector client...")
+# Global persistent singletons (Lightweight ONNX model ~40MB RAM)
+print("[CyberRAG] Initializing in-memory fastembed model and vector client...")
 if QDRANT_URL:
     print(f"[CyberRAG] Connecting to Qdrant Cloud at {QDRANT_URL}...")
-    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
 else:
     print(f"[CyberRAG] Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
-    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
-embedder = SentenceTransformer("BAAI/bge-base-en-v1.5")
+    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=60)
+embedder = TextEmbedding(model_name="BAAI/bge-base-en-v1.5")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 
@@ -150,8 +150,8 @@ def query_threat_intel(req: QueryRequest):
     if not qdrant.collection_exists(COLLECTION_NAME):
         raise HTTPException(status_code=404, detail="Collection not indexed. Please run ingestion first.")
 
-    # 1. Local Dense Vector Search
-    query_vector = embedder.encode(req.query).tolist()
+    # 1. Local Dense Vector Search (via fastembed)
+    query_vector = list(embedder.embed([req.query]))[0].tolist()
     search_res = qdrant.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,
@@ -263,7 +263,7 @@ def run_ingest_sync(limit: int):
                 f"Description: {item.get('shortDescription')}\n"
                 f"Required Action: {item.get('requiredAction')}"
             )
-            embedding = embedder.encode(chunk_text).tolist()
+            embedding = list(embedder.embed([chunk_text]))[0].tolist()
             payload = {
                 "cve_id": item.get("cveID"),
                 "vendor": item.get("vendorProject"),

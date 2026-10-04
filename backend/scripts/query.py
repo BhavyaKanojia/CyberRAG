@@ -6,7 +6,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 from groq import Groq
 
 # Load .env from project root
@@ -24,23 +24,23 @@ QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 COLLECTION_NAME = "cisa_kev_threat_intel"
 
 # Initialize resources
-print("Initializing Qdrant client and embedding model...")
+print("Initializing Qdrant client and lightweight embedding model...")
 if QDRANT_URL:
     print(f"Connecting to Qdrant Cloud at {QDRANT_URL}...")
-    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
 else:
     print(f"Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
-    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=60)
 
-embedder = SentenceTransformer("BAAI/bge-base-en-v1.5")
+embedder = TextEmbedding(model_name="BAAI/bge-base-en-v1.5")
 groq_client = Groq(api_key=api_key)
 
 def ask_cyberrag(user_query: str):
     print(f"\n[Query] \"{user_query}\"")
     print("Searching Qdrant for matching threat intelligence...")
     
-    # 1. Local Dense Search (Cosine Similarity)
-    query_vector = embedder.encode(user_query).tolist()
+    # 1. Local Dense Search (Cosine Similarity via fastembed)
+    query_vector = list(embedder.embed([user_query]))[0].tolist()
     
     # query_points replaces search in qdrant-client >= 1.10
     search_results = qdrant.query_points(

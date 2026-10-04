@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import requests
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 # Load .env
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
@@ -31,9 +31,9 @@ if not client.collection_exists(COLLECTION_NAME):
         vectors_config=VectorParams(size=768, distance=Distance.COSINE),
     )
 
-# 3. Load embedding model locally
-print("Loading BAAI/bge-base-en-v1.5 locally...")
-model = SentenceTransformer("BAAI/bge-base-en-v1.5")
+# 3. Load lightweight embedding model
+print("Loading BAAI/bge-base-en-v1.5 via fastembed...")
+model = TextEmbedding(model_name="BAAI/bge-base-en-v1.5")
 
 # 4. Fetch CISA KEV JSON (Free & Public Domain)
 print("Fetching official CISA KEV Catalog...")
@@ -58,7 +58,7 @@ for idx, item in enumerate(subset):
         f"Required Action: {item['requiredAction']}"
     )
     
-    embedding = model.encode(chunk_text).tolist()
+    embedding = list(model.embed([chunk_text]))[0].tolist()
     
     payload = {
         "cve_id": item["cveID"],
