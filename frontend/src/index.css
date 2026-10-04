@@ -1,0 +1,198 @@
+:root {
+  --bg-darkest: #05070b;
+  --bg-primary: #090d16;
+  --bg-secondary: #0f172a;
+  --bg-card: rgba(15, 23, 42, 0.65);
+  --bg-card-hover: rgba(22, 36, 65, 0.85);
+  --bg-glass: rgba(13, 20, 36, 0.8);
+  
+  --accent-cyan: #00e5ff;
+  --accent-cyan-glow: rgba(0, 229, 255, 0.35);
+  --accent-emerald: #00ff9d;
+  --accent-emerald-glow: rgba(0, 255, 157, 0.3);
+  --accent-amber: #ffb703;
+  --accent-amber-glow: rgba(255, 183, 3, 0.3);
+  --accent-rose: #ff2a5f;
+  --accent-rose-glow: rgba(255, 42, 95, 0.35);
+  --accent-purple: #a855f7;
+
+  --text-main: #f1f5f9;
+  --text-dim: #94a3b8;
+  --text-muted: #64748b;
+  
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-cyan: rgba(0, 229, 255, 0.25);
+  --border-emerald: rgba(0, 255, 157, 0.25);
+  --border-glow: 0 0 15px rgba(0, 229, 255, 0.15);
+
+  --font-display: 'Orbitron', -apple-system, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-darkest);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(0, 255, 157, 0.04) 0%, transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Cyber Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-darkest);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+/* Glow & Keyframe Utilities */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 229, 255, 0.45);
+  }
+}
+
+@keyframes radarScan {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scanLine {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+.radar-sweep {
+  animation: radarScan 4s linear infinite;
+}
+
+/* Markdown Table & Typography inside responses */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.88rem;
+  background: rgba(9, 13, 22, 0.85);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-cyan);
+}
+
+.markdown-content th {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--accent-cyan);
+  text-align: left;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-cyan);
+}
+
+.markdown-content td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+
+.markdown-content tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-content tr:hover td {
+  background: rgba(0, 229, 255, 0.03);
+}
+
+.markdown-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.markdown-content ul, .markdown-content ol {
+  padding-left: 1.4rem;
+  margin: 0.8rem 0;
+}
+
+.markdown-content li {
+  margin-bottom: 0.4rem;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.05);
+  padding: 8px 14px;
+  border-radius: 0 6px 6px 0;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.markdown-content code {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+/* Badge for clickable source citation */
+.cve-citation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 3px;
+  vertical-align: middle;
+}
+
+.cve-citation-badge:hover {
+  background: rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  transform: translateY(-1px);
+}
