@@ -14,7 +14,7 @@ export default function App() {
   const fetchHealth = async () => {
     setIsRefreshing(true);
     try {
-      const res = await fetch('/api/health');
+      const res = await fetch('http://127.0.0.1:8000/api/health');
       if (res.ok) {
         const data = await res.json();
         setHealth(data);
