@@ -11,14 +11,17 @@ import {
   AlertCircle,
   FileCode,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  HelpCircle,
+  MessageSquareQuote
 } from 'lucide-react';
 
 const SUGGESTED_QUERIES = [
-  { label: "Palo Alto Networks Exploits", query: "What known vulnerabilities affect Palo Alto Networks products and what actions are required?" },
-  { label: "Cisco IOS CSRF Remote Exec", query: "Explain Cisco IOS cross-site forgery and command execution flaws in the dataset." },
-  { label: "Apple iOS Memory Corruptions", query: "What use-after-free and memory corruption vulnerabilities affect Apple iOS and macOS?" },
-  { label: "Critical Mitigation Actions", query: "Summarize the required actions and BOD compliance deadlines across all recent vulnerabilities." }
+  { label: "Palo Alto Networks Flaws", query: "Can you explain what known vulnerabilities affect Palo Alto Networks and how to fix them in simple terms?" },
+  { label: "Cisco IOS Vulnerabilities", query: "What security issues exist in Cisco IOS and what immediate steps should I take?" },
+  { label: "Apple iOS/macOS Risks", query: "Tell me about recent memory vulnerabilities affecting Apple devices and what users need to do." },
+  { label: "Top Emergency Actions", query: "What are the most urgent patching actions required by CISA right now?" }
 ];
 
 export default function ThreatChat({ onSelectCve }) {
@@ -27,15 +30,16 @@ export default function ThreatChat({ onSelectCve }) {
   const [conversation, setConversation] = useState([
     {
       role: 'assistant',
-      content: `### 🛡️ CyberRAG Neural Threat Engine Online
-All intelligence responses are strictly grounded in verified **CISA Known Exploited Vulnerabilities (KEV)** vectors indexed in **Qdrant**.
+      content: `👋 **Hi! I'm CyberRAG, your Threat Intelligence & CVE Assistant.**
 
-**Directives in effect:**
-- Strict Anti-Hallucination source boundaries
-- Exact CVE citation enforcement
-- Mandatory remediation & BOD compliance highlighting
+I'm here to help you understand complex security vulnerabilities in **plain, simple language**, without confusing jargon.
 
-Select a prompt below or enter an analyst query to start scanning.`,
+### 🛡️ How I Help You:
+- **Plain English Summaries:** I break down technical CVEs so you know exactly what is happening.
+- **Strict Verification:** Every fact is cross-checked against official **CISA KEV** threat vectors.
+- **Actionable Steps:** I give you direct, step-by-step mitigation advice and deadlines.
+
+Click one of the suggested questions below, or ask me about any vendor, product, or CVE!`,
       sources: [],
       stats: null
     }
@@ -99,7 +103,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
         ...prev,
         {
           role: 'assistant',
-          content: `⚠️ **CyberRAG Execution Notice:** Unable to reach API server. Please verify that the FastAPI backend is running at http://127.0.0.1:8000.\n\n*Error:* ${err.message}`,
+          content: `⚠️ **Oops! Couldn't reach the intelligence engine.**\n\nPlease make sure the FastAPI server is running on port 8000.\n\n*Error details:* ${err.message}`,
           sources: [],
           isError: true
         }
@@ -109,9 +113,20 @@ Select a prompt below or enter an analyst query to start scanning.`,
     }
   };
 
+  const handleClearChat = () => {
+    setConversation([
+      {
+        role: 'assistant',
+        content: `👋 **Chat refreshed!** Ask me any question about CVEs, vendors, or required security patches.`,
+        sources: [],
+        stats: null
+      }
+    ]);
+    setSelectedSources([]);
+  };
+
   // Helper to render text with clickable [Source: CVE-XXXX-XXXX] badges
   const renderFormattedContent = (content) => {
-    // Replace citation tags with interactive components
     const parts = content.split(/(\[Source:\s*CVE-[0-9]{4}-[0-9]+[^\]]*\])/gi);
 
     return parts.map((part, i) => {
@@ -131,19 +146,17 @@ Select a prompt below or enter an analyst query to start scanning.`,
         );
       }
 
-      // Render standard markdown tables and formatting
       return <span key={i} dangerouslySetInnerHTML={{ __html: formatMarkdownBasic(part) }} />;
     });
   };
 
-  // Simple clean markdown parser for headings, bold, and tables
   const formatMarkdownBasic = (text) => {
     let formatted = text
-      .replace(/^### (.*$)/gim, '<h3 style="color:var(--accent-cyan); font-family:var(--font-display); margin:1rem 0 0.5rem; font-size:1.05rem;">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 style="color:var(--accent-cyan); font-family:var(--font-display); margin:1.25rem 0 0.5rem; font-size:1.2rem;">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 style="color:#ffffff; font-family:var(--font-display); margin:1.5rem 0 0.75rem; font-size:1.35rem;">$1</h1>')
-      .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+      .replace(/^### (.*$)/gim, '<h3 style="color:var(--accent-cyan); font-family:var(--font-display); margin:1rem 0 0.4rem; font-size:1.02rem;">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 style="color:var(--accent-cyan); font-family:var(--font-display); margin:1.2rem 0 0.5rem; font-size:1.15rem;">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 style="color:#ffffff; font-family:var(--font-display); margin:1.4rem 0 0.6rem; font-size:1.3rem;">$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong style="color:#ffffff; font-weight:600;">$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em style="color:#cbd5e1;">$1</em>')
       .replace(/`([^`]+)`/gim, '<code>$1</code>')
       .replace(/\n\n/g, '<br/><br/>');
 
@@ -170,7 +183,46 @@ Select a prompt below or enter an analyst query to start scanning.`,
         borderRadius: '12px',
         overflow: 'hidden'
       }}>
-        {/* Chat Feed */}
+        {/* Chat Feed Header */}
+        <div style={{
+          padding: '0.75rem 1.25rem',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(15, 23, 42, 0.5)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MessageSquareQuote size={16} color="var(--accent-cyan)" />
+            <span style={{ fontSize: '0.82rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+              THREAT INTELLIGENCE DIALOGUE
+            </span>
+          </div>
+          <button
+            onClick={handleClearChat}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '6px',
+              padding: '4px 8px',
+              color: 'var(--text-muted)',
+              fontSize: '0.72rem',
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-rose)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            <Trash2 size={12} />
+            <span>Reset Chat</span>
+          </button>
+        </div>
+
+        {/* Messages List */}
         <div style={{
           flex: 1,
           overflowY: 'auto',
@@ -201,13 +253,13 @@ Select a prompt below or enter an analyst query to start scanning.`,
               }}>
                 {msg.role === 'user' ? (
                   <>
-                    <span>SEC_ANALYST_QUERY</span>
+                    <span>YOU (Analyst)</span>
                     <Terminal size={12} />
                   </>
                 ) : (
                   <>
                     <ShieldCheck size={13} color="var(--accent-emerald)" />
-                    <span>CYBERRAG_GROUNDED_INTEL</span>
+                    <span>CYBERRAG ASSISTANT</span>
                     {msg.stats && (
                       <span style={{ color: 'var(--text-muted)', marginLeft: '8px' }}>
                         • {msg.stats.time}ms • {msg.stats.model.split('/')[1] || msg.stats.model}
@@ -221,7 +273,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
               <div
                 style={{
                   background: msg.role === 'user'
-                    ? 'linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(0, 255, 157, 0.08))'
+                    ? 'linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(0, 255, 157, 0.1))'
                     : 'rgba(15, 23, 42, 0.85)',
                   border: msg.role === 'user'
                     ? '1px solid var(--accent-cyan)'
@@ -229,13 +281,13 @@ Select a prompt below or enter an analyst query to start scanning.`,
                       ? '1px solid var(--accent-rose)'
                       : '1px solid var(--border-subtle)',
                   borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                  padding: '1rem 1.25rem',
+                  padding: '1.1rem 1.3rem',
                   maxWidth: '92%',
                   boxShadow: msg.role === 'user'
                     ? '0 0 15px rgba(0, 229, 255, 0.15)'
                     : '0 4px 20px rgba(0, 0, 0, 0.4)',
                   fontSize: '0.92rem',
-                  lineHeight: 1.65
+                  lineHeight: 1.7
                 }}
                 className="markdown-content"
               >
@@ -244,7 +296,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
                 {/* Sources pill footer inside assistant message */}
                 {msg.sources && msg.sources.length > 0 && (
                   <div style={{
-                    marginTop: '1rem',
+                    marginTop: '1.1rem',
                     paddingTop: '0.75rem',
                     borderTop: '1px solid rgba(255, 255, 255, 0.08)',
                     display: 'flex',
@@ -253,7 +305,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
                     gap: '6px'
                   }}>
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-                      Verified KEV Vectors:
+                      Verified Sources:
                     </span>
                     {msg.sources.map((src, sIdx) => (
                       <button
@@ -305,22 +357,26 @@ Select a prompt below or enter an analyst query to start scanning.`,
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <span>Embedding Query (BGE-Base 768d) & Searching Qdrant...</span>
+                <span>Consulting verified CISA threat vectors...</span>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Queries Pills */}
+        {/* Suggested Queries Quick Bar */}
         <div style={{
-          padding: '0.5rem 1.25rem',
+          padding: '0.6rem 1.25rem',
           background: 'rgba(9, 13, 22, 0.95)',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           gap: '6px',
-          overflowX: 'auto'
+          overflowX: 'auto',
+          alignItems: 'center'
         }}>
+          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            Try asking:
+          </span>
           {SUGGESTED_QUERIES.map((item, qIdx) => (
             <button
               key={qIdx}
@@ -377,7 +433,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Ask threat intelligence (e.g. 'What CVEs exploit Cisco SD-WAN or Fortinet?')..."
+              placeholder="Ask anything (e.g. 'Explain CVE-2026-0300 in simple words', 'What steps should I take for Cisco?')..."
               disabled={loading}
               style={{
                 width: '100%',
@@ -419,7 +475,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
               transition: 'all 0.2s'
             }}
           >
-            <span>ANALYZE</span>
+            <span>Ask CyberRAG</span>
             <Send size={15} />
           </button>
         </div>
@@ -486,7 +542,7 @@ Select a prompt below or enter an analyst query to start scanning.`,
               <Layers size={32} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
               <p>No active retrieval context.</p>
               <p style={{ fontSize: '0.72rem', marginTop: '6px', color: 'var(--text-dim)' }}>
-                Run an intelligence query to inspect retrieved vectors & cosine similarity metrics.
+                Ask a question to see the exact CISA KEV records & similarity scores used to formulate the answer.
               </p>
             </div>
           ) : (
