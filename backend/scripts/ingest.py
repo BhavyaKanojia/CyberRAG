@@ -1,11 +1,28 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 import requests
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
 
-# 1. Connect to local Qdrant instance
-client = QdrantClient(host="localhost", port=6333)
+# Load .env
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 COLLECTION_NAME = "cisa_kev_threat_intel"
+
+# 1. Connect to Qdrant (Cloud or Local)
+if QDRANT_URL:
+    print(f"Connecting to Qdrant Cloud at {QDRANT_URL}...")
+    client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+else:
+    print(f"Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
+    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 # 2. Re-create collection with 768-dim (matches BGE-base)
 client.recreate_collection(

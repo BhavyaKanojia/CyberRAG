@@ -20,6 +20,8 @@ import requests
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 COLLECTION_NAME = "cisa_kev_threat_intel"
@@ -42,7 +44,12 @@ app.add_middleware(
 
 # Global persistent singletons
 print("[CyberRAG] Initializing in-memory embedding model and vector client...")
-qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+if QDRANT_URL:
+    print(f"[CyberRAG] Connecting to Qdrant Cloud at {QDRANT_URL}...")
+    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+else:
+    print(f"[CyberRAG] Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
+    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 embedder = SentenceTransformer("BAAI/bge-base-en-v1.5")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 

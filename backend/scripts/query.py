@@ -17,13 +17,21 @@ api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
     raise ValueError("GROQ_API_KEY not found. Please verify your .env file.")
 
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 COLLECTION_NAME = "cisa_kev_threat_intel"
 
 # Initialize resources
 print("Initializing Qdrant client and embedding model...")
-qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+if QDRANT_URL:
+    print(f"Connecting to Qdrant Cloud at {QDRANT_URL}...")
+    qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+else:
+    print(f"Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
+    qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+
 embedder = SentenceTransformer("BAAI/bge-base-en-v1.5")
 groq_client = Groq(api_key=api_key)
 
