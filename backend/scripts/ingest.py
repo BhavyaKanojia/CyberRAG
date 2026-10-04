@@ -19,18 +19,19 @@ COLLECTION_NAME = "cisa_kev_threat_intel"
 # 1. Connect to Qdrant (Cloud or Local)
 if QDRANT_URL:
     print(f"Connecting to Qdrant Cloud at {QDRANT_URL}...")
-    client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
 else:
     print(f"Connecting to local Qdrant at {QDRANT_HOST}:{QDRANT_PORT}...")
-    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=60)
 
 # 2. Re-create collection with 768-dim (matches BGE-base)
-client.recreate_collection(
-    collection_name=COLLECTION_NAME,
-    vectors_config=VectorParams(size=768, distance=Distance.COSINE),
-)
+if not client.collection_exists(COLLECTION_NAME):
+    client.create_collection(
+        collection_name=COLLECTION_NAME,
+        vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+    )
 
-# 3. Load embedding model locally (Uses CUDA if PyTorch sees your RTX 3050)
+# 3. Load embedding model locally
 print("Loading BAAI/bge-base-en-v1.5 locally...")
 model = SentenceTransformer("BAAI/bge-base-en-v1.5")
 
@@ -40,11 +41,12 @@ url = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabil
 resp = requests.get(url, timeout=30)
 vulns = resp.json().get("vulnerabilities", [])
 
-# Let's index the first 250 records for a rapid, lightweight baseline
+# Index in batches of 50 for smooth network streaming
 subset = vulns[:250]
-print(f"Indexing {len(subset)} vulnerability records...")
+print(f"Indexing {len(subset)} vulnerability records in batches...")
 
 points = []
+batch_size = 50
 for idx, item in enumerate(subset):
     chunk_text = (
         f"CVE ID: {item['cveID']}\n"
@@ -56,7 +58,6 @@ for idx, item in enumerate(subset):
         f"Required Action: {item['requiredAction']}"
     )
     
-    # Generate local embedding (no API billing)
     embedding = model.encode(chunk_text).tolist()
     
     payload = {
@@ -68,6 +69,15 @@ for idx, item in enumerate(subset):
     }
     
     points.append(PointStruct(id=idx, vector=embedding, payload=payload))
+    
+    if len(points) >= batch_size:
+        client.upsert(collection_name=COLLECTION_NAME, points=points)
+        print(f"Uploaded batch of {len(points)} points (total: {idx + 1}/{len(subset)})...")
+        points = []
 
-client.upsert(collection_name=COLLECTION_NAME, points=points)
-print(f"Successfully indexed {len(points)} threat intelligence records into Qdrant!")
+if points:
+    client.upsert(collection_name=COLLECTION_NAME, points=points)
+    print(f"Uploaded final batch of {len(points)} points...")
+
+count = client.count(collection_name=COLLECTION_NAME).count
+print(f"Successfully indexed {count} threat intelligence records in Qdrant Cloud!")
