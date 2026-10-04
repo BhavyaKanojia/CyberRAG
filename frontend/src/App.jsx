@@ -4,6 +4,7 @@ import ThreatChat from './components/ThreatChat';
 import CveExplorer from './components/CveExplorer';
 import ArchitectureView from './components/ArchitectureView';
 import CveModal from './components/CveModal';
+import { API_BASE_URL } from './config';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('chat');
@@ -14,7 +15,7 @@ export default function App() {
   const fetchHealth = async () => {
     setIsRefreshing(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/health');
+      const res = await fetch(`${API_BASE_URL || 'http://127.0.0.1:8000'}/api/health`);
       if (res.ok) {
         const data = await res.json();
         setHealth(data);

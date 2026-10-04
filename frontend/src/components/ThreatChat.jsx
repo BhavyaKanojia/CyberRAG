@@ -16,6 +16,7 @@ import {
   HelpCircle,
   MessageSquareQuote
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const SUGGESTED_QUERIES = [
   { label: "Palo Alto Networks Flaws", query: "Can you explain what known vulnerabilities affect Palo Alto Networks and how to fix them in simple terms?" },
@@ -65,7 +66,7 @@ Click one of the suggested questions below, or ask me about any vendor, product,
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/query', {
+      const response = await fetch(`${API_BASE_URL || 'http://127.0.0.1:8000'}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
